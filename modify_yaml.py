@@ -31,6 +31,7 @@ class BaseModify:
 
     @staticmethod
     def record(data: bytes):
+        """每次都缓存一份到临时文件中，方便排查问题"""
         with open(os.path.join(os.path.dirname(__file__), 'tmp.txt'), 'wb') as f:
             f.write(data)
 
@@ -38,7 +39,6 @@ class BaseModify:
         """生成yaml序列化字节"""
         self.build_group()
         data = yaml.safe_dump(self.struct, allow_unicode=True, sort_keys=False, encoding='utf-8')
-        self.record(data)
         return data
 
 
@@ -46,7 +46,7 @@ class RouterModify(BaseModify):
     @staticmethod
     def _group(lis: list) -> list:
         groups = defaultdict(list)
-        lis.sort(key=lambda i: i['name'])
+        lis.sort(key=lambda j: j['name'])
         for i in lis:
             name = i['name']
             if re.search(r'(hongkong|hong kong|香港)', name.lower()):

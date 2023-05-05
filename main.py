@@ -20,7 +20,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         super().__init__(*args, **kwargs)
 
     def _net(self):
-        """添加剩余流量等信息"""
+        """获取原生订阅信息"""
         path = unquote(self.path)
         print(f'parse: {path}')
         session = requests.Session()
@@ -30,12 +30,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
         return response
 
     def parse_url(self) -> Optional[bytes]:
+        """路由就是原生订阅链接"""
         if self.path and len(self.path) > 1:
             self.path = self.path[1:]
             return b''
         return b'parse url error'
 
     def end_headers(self):
+        """继承占位，空调用"""
         ...
 
     def build_headers(self, headers):
@@ -47,8 +49,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         self.msg += data
 
-    def build_body(self):
-        ...
+    def build_body(self, body):
+        self.msg += body
 
     def do_GET(self):
         self.parse_url()
@@ -58,11 +60,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         body = RouterModify(response.text).build()
         self.msg += f'Content-Length: {len(body)}\r\n\r\n'.encode()
-        self.msg += body
+        self.build_body(body)
 
+        RouterModify.record(self.msg)
         self.wfile.write(self.msg)
 
     def handle(self):
+        """重写接收请求"""
         self.handle_one_request()
 
 
