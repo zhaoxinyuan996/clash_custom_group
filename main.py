@@ -4,14 +4,10 @@ import http.server
 import socketserver
 from typing import Optional
 from urllib.parse import unquote
-from modify_yaml import RouterModify
-
+from modify_yaml import BaseModify
 
 host = socket.gethostbyname(socket.gethostname())
 port = 8000
-
-delay_url = 'http://www.gstatic.com/generate_204'
-delay_interval = 100
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -58,11 +54,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         self.build_headers(response.headers)
 
-        body = RouterModify(response.text).build()
+        body = BaseModify.factory(self.path)(response.text).build()
         self.msg += f'Content-Length: {len(body)}\r\n\r\n'.encode()
         self.build_body(body)
 
-        RouterModify.record(self.msg)
+        BaseModify.record(self.msg)
         self.wfile.write(self.msg)
 
     def handle(self):
@@ -71,6 +67,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    with socketserver.TCPServer((host, port), Handler) as httpd:
+    with socketserver.TCPServer(('0.0.0.0', port), Handler) as httpd:
         print(f"serving at {host}:{port}")
         httpd.serve_forever()
