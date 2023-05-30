@@ -66,6 +66,8 @@ class CatModify(BaseModify):
                 g['type'] = 'url-test'
                 gs.append(g)
         self.struct['proxy-groups'].extend(gs)
+        self.struct['proxy-groups'][0]['proxies'].extend([i['name'] for i in gs])
+
 
 class RouterModify(BaseModify):
     """负载组"""
