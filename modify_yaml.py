@@ -5,13 +5,14 @@ import json
 from urllib.parse import urlparse, unquote, parse_qs
 import yaml
 import base64
+from copy import deepcopy
 from collections import defaultdict
 
 
 yaml.Dumper.ignore_aliases = lambda *args: True
 
 delay_url = 'http://www.gstatic.com/generate_204'
-delay_interval = 180
+delay_interval = 300
 
 
 class BaseModify:
@@ -24,6 +25,8 @@ class BaseModify:
     def factory(url: str):
         if 'dt666' in url:
             return DengTaModify
+        elif 'pptiok2020' in url:
+            return CatModify
         return RouterModify
 
     @staticmethod
@@ -52,6 +55,17 @@ class BaseModify:
         data = yaml.safe_dump(self.struct, allow_unicode=True, sort_keys=False, encoding='utf-8')
         return data
 
+
+class CatModify(BaseModify):
+    def build_group(self):
+        gs = []
+        for g in self.struct['proxy-groups']:
+            if '负载' in g['name']:
+                g = deepcopy(g)
+                g['name'] = re.sub(r'负载组', '测速', g['name'])
+                g['type'] = 'url-test'
+                gs.append(g)
+        self.struct['proxy-groups'].extend(gs)
 
 class RouterModify(BaseModify):
     """负载组"""
@@ -167,11 +181,16 @@ proxy-groups:
             "cipher": "auto",
             "tls": True,
 
+            # win
+            # 'network': 'ws',
+            # 'udp': True,
+            # 'ws-opts': ' {path: %s, headers: { Host: %s }} ' % (d['path'], d['host']),
+            # 'ws-path': d['path'],
+            # 'ws-headers': '{ Host: %s }' % d['host']
+            # 路由器
+            'skip-cert-verify': False,
             'network': 'ws',
-            'udp': True,
             'ws-opts': ' {path: %s, headers: { Host: %s }} ' % (d['path'], d['host']),
-            'ws-path' : d['path'],
-            'ws-headers': '{ Host: %s }' % d['host']
         }
         return new_d
 
